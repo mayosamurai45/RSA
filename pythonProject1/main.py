@@ -2,25 +2,40 @@ import random
 from math import gcd
 
 def KibovEuk(a, b):
-    # Base Case
-    if a == 0:
-        return b, 0, 1
+    x0 = 1
+    x1 = 0
+    y0 = 0
+    y1 = 1
+    n = 1
 
-    gcd, x1, y1 = KibovEuk(b % a, a)
+    while b != 0:
+        q = a % b
+        r = a // b
 
-    # Update x and y using results of recursive
-    # call
-    x = y1 - (b // a) * x1
-    y = x1
+        a = b
+        b = q
+        x = x1
+        y = y1
 
-    return gcd, x, y
+        x1 = r*x1 + x0
+        y1 = r*y1 + y0
+
+        x0 = x
+        y0 = y
+
+        n = -n
+
+    x = n*x0
+    y = -n*y0
+
+    return a,x,y #1 10 -1
 
 
 def ModPow(a,e,m):
     result=1
     apow=a
     while e!=0:
-        if e and 0x01==0x01:
+        if e & 0x01==0x01:
             result=(result*apow) % m
         e>>=1
         apow=(apow*apow) % m
@@ -28,13 +43,14 @@ def ModPow(a,e,m):
 
 
 def ModInverse(a,m):
-    m0=0
+    m0=m
     x=1
     y=0
+    q=0
     if m==1:
         return 0
     while (a>1):
-        q=a/m
+        q=a//m
         b=m
         m=a%m
         a=b
@@ -61,7 +77,7 @@ def FermatTeszt(n,k):
 
 def millerRabinTest(n,m):
     a = random.randrange(2, n-2)
-    x = pow(a, m, n)
+    x = ModPow(a, m, n)
     if x == 1 or x == n-1:
         return True
     while m != n-1:
@@ -95,14 +111,14 @@ def CRT(c, m):
     x = 0
     for i in range(0, len(c)):
         M_i = M // m[i]
-        y_i = KibovEuk(M_i, m[i])[1]
+        y_i = ModInverse(M_i, m[i])
         x += c[i] * M_i * y_i
     x = x % M
     return x
 
 
 def Enc(m,e,n):
-    return pow(m,e,n)
+    return ModPow(m,e,n)
 
 
 def Dec(c, p, q, d):
@@ -110,10 +126,20 @@ def Dec(c, p, q, d):
     c2 = c % q
     d1 = d % (p-1)
     d2 = d % (q-1)
-    cList = [pow(c1, d1, p), pow(c2, d2, q)]
+    cList = [ModPow(c1, d1, p), ModPow(c2, d2, q)]
     mList = [p, q]
     return CRT(cList, mList)
 
+
+def Sign(m,d,n):
+    return ModPow(m,d,n)
+
+
+
+
+def DeSign(S, e, n, m):
+    if Enc(S,e,p)!=m:
+        return "autfailure"
 
 def getRandPrimes(bits):
     p=random.getrandbits(bits)
@@ -135,7 +161,7 @@ if __name__ == '__main__':
     e = random.randrange(1,fi)
     while gcd(e, fi) != 1:
         e = random.randrange(1, fi)
-    d=pow(e,-1,fi)
+    d=ModInverse(e,fi)
 
 
 
@@ -144,7 +170,8 @@ if __name__ == '__main__':
     print(Enc(m,e,n))
     m=Enc(m,e,n)
     print(Dec(m,p,q,d))
-
+    S=Sign(m,d,n)
+    DeSign(S,e,n,m)
 
 
 
